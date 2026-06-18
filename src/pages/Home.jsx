@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiArrowRight, FiCheckCircle, FiUsers, FiAward, FiShield, FiMail, FiPhone, FiMapPin, FiActivity, FiDroplet, FiSun, FiLeaf, FiShoppingBag } from 'react-icons/fi'
+import { FiArrowRight, FiCheckCircle, FiUsers, FiAward, FiShield, FiMail, FiPhone, FiMapPin, FiActivity, FiDroplet, FiSun, FiShoppingBag } from 'react-icons/fi'
 import { useTheme } from '../context/ThemeContext'
 import MainLayout from '../components/layout/MainLayout'
 import Button from '../components/common/Button'
@@ -32,7 +32,7 @@ const Home = () => {
       description: 'Intelligent irrigation scheduling to optimize water usage',
     },
     {
-      icon: FiLeaf,
+      icon: FiActivity,
       title: 'Crop Recommendation',
       description: 'Data-driven crop suggestions based on soil and climate conditions',
     },
