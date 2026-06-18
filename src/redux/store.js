@@ -5,6 +5,9 @@ import authReducer from './slices/authSlice'
 import userReducer from './slices/userSlice'
 import marketplaceReducer from './slices/marketplaceSlice'
 import weatherReducer from './slices/weatherSlice'
+import diseaseReducer from './slices/diseaseSlice'
+import soilReducer from './slices/soilSlice'
+import notificationReducer from './slices/notificationSlice'
 
 const persistConfig = {
   key: 'root',
@@ -17,6 +20,9 @@ const persistedReducer = persistReducer(persistConfig, {
   user: userReducer,
   marketplace: marketplaceReducer,
   weather: weatherReducer,
+  disease: diseaseReducer,
+  soil: soilReducer,
+  notification: notificationReducer,
 })
 
 export const store = configureStore({
@@ -30,3 +36,4 @@ export const store = configureStore({
 })
 
 export const persistor = persistStore(store)
+export default store

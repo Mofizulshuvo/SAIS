@@ -52,11 +52,27 @@ const authSlice = createSlice({
       state.user = action.payload.user
       state.token = action.payload.token
       state.isAuthenticated = true
+      localStorage.setItem('token', action.payload.token)
+      if (action.payload.refreshToken) {
+        localStorage.setItem('refreshToken', action.payload.refreshToken)
+      }
+    },
+    loginSuccess: (state, action) => {
+      state.user = action.payload.user
+      state.token = action.payload.token
+      state.isAuthenticated = true
+      state.error = null
+      localStorage.setItem('token', action.payload.token)
+      if (action.payload.refreshToken) {
+        localStorage.setItem('refreshToken', action.payload.refreshToken)
+      }
     },
     clearCredentials: (state) => {
       state.user = null
       state.token = null
       state.isAuthenticated = false
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
     },
   },
   extraReducers: (builder) => {
@@ -71,6 +87,10 @@ const authSlice = createSlice({
         state.token = action.payload.token
         state.isAuthenticated = true
         state.error = null
+        localStorage.setItem('token', action.payload.token)
+        if (action.payload.refreshToken) {
+          localStorage.setItem('refreshToken', action.payload.refreshToken)
+        }
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false
@@ -87,6 +107,10 @@ const authSlice = createSlice({
         state.token = action.payload.token
         state.isAuthenticated = true
         state.error = null
+        localStorage.setItem('token', action.payload.token)
+        if (action.payload.refreshToken) {
+          localStorage.setItem('refreshToken', action.payload.refreshToken)
+        }
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false
@@ -98,9 +122,11 @@ const authSlice = createSlice({
         state.token = null
         state.isAuthenticated = false
         state.error = null
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
       })
   },
 })
 
-export const { clearError, setCredentials, clearCredentials } = authSlice.actions
+export const { clearError, setCredentials, loginSuccess, clearCredentials } = authSlice.actions
 export default authSlice.reducer
