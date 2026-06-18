@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { FiLeaf, FiSun, FiDroplet, FiTrendingUp } from 'react-icons/fi'
+import { FiActivity, FiSun, FiDroplet, FiTrendingUp } from 'react-icons/fi'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import Button from '../components/common/Button'
 import Input from '../components/common/Input'
@@ -115,7 +115,7 @@ const CropRecommendation = () => {
                 <Button
                   size="lg"
                   fullWidth
-                  icon={FiLeaf}
+                  icon={FiActivity}
                   loading={isAnalyzing}
                   onClick={handleAnalyze}
                   className="mt-6"
@@ -207,7 +207,7 @@ const CropRecommendation = () => {
             ) : (
               <Card>
                 <div className="p-12 text-center">
-                  <FiLeaf className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <FiActivity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                     No Recommendations Yet
                   </h3>

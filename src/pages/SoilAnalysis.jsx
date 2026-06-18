@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { FiDroplet, FiActivity, FiSun, FiLeaf } from 'react-icons/fi'
+import { FiDroplet, FiActivity, FiSun } from 'react-icons/fi'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import Button from '../components/common/Button'
 import Input from '../components/common/Input'
@@ -150,7 +150,7 @@ const SoilAnalysis = () => {
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
                         <div className="flex items-center space-x-2 mb-2">
-                          <FiLeaf className="w-5 h-5 text-green-500" />
+                          <FiActivity className="w-5 h-5 text-green-500" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">Organic Matter</span>
                         </div>
                         <p className="text-xl font-bold text-gray-900 dark:text-white">{result.organicMatter}</p>

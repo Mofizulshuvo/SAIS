@@ -8,7 +8,6 @@ import {
   FiActivity,
   FiDroplet,
   FiSun,
-  FiLeaf,
   FiMessageSquare,
   FiUser,
   FiSettings,
@@ -29,7 +28,7 @@ const Sidebar = ({ isCollapsed, toggleCollapse }) => {
     { name: 'Soil Analysis', href: '/soil-analysis', icon: FiDroplet },
     { name: 'Weather', href: '/weather', icon: FiSun },
     { name: 'Irrigation', href: '/irrigation', icon: FiDroplet },
-    { name: 'Crop Recommendation', href: '/crop-recommendation', icon: FiLeaf },
+    { name: 'Crop Recommendation', href: '/crop-recommendation', icon: FiActivity },
     { name: 'Marketplace', href: '/marketplace', icon: FiShoppingBag },
     { name: 'Chatbot', href: '/chatbot', icon: FiMessageSquare },
   ]
