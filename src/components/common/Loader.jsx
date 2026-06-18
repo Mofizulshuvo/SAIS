@@ -27,17 +27,19 @@ const Loader = ({ size = 'md', color = 'primary', className = '' }) => {
   )
 }
 
-export const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-    <div className="text-center">
-      <Loader size="xl" />
-      <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+export const PageLoader = () => {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-center">
+        <Loader size="xl" />
+        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+      </div>
     </div>
   )
-)
+}
 
-export const ButtonLoader = () => (
-  <Loader size="sm" color="white" />
-)
+export const ButtonLoader = () => {
+  return <Loader size="sm" color="white" />
+}
 
 export default Loader
