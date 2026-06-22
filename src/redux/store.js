@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import { persistStore, persistReducer } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 import authReducer from './slices/authSlice'
@@ -15,7 +15,7 @@ const persistConfig = {
   whitelist: ['auth', 'user'],
 }
 
-const persistedReducer = persistReducer(persistConfig, {
+const rootReducer = combineReducers({
   auth: authReducer,
   user: userReducer,
   marketplace: marketplaceReducer,
@@ -24,6 +24,8 @@ const persistedReducer = persistReducer(persistConfig, {
   soil: soilReducer,
   notification: notificationReducer,
 })
+
+const persistedReducer = persistReducer(persistConfig, rootReducer)
 
 export const store = configureStore({
   reducer: persistedReducer,
