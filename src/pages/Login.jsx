@@ -61,7 +61,7 @@ const Login = () => {
         </div>
 
         <Card>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
             <Input
               label="Email"
               type="email"

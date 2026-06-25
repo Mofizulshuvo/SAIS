@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FiPackage, FiSearch, FiFilter, FiEye } from 'react-icons/fi'
 import DashboardLayout from '../components/layout/DashboardLayout'
@@ -6,42 +6,30 @@ import Button from '../components/common/Button'
 import Input from '../components/common/Input'
 import Card from '../components/common/Card'
 import { formatCurrency } from '../utils/helpers'
+import { getOrders } from '../api/marketplaceApi'
+import toast from 'react-hot-toast'
 
 const Orders = () => {
-  const orders = [
-    {
-      id: 'ORD-001',
-      date: '2024-01-20',
-      status: 'Processing',
-      total: 451.00,
-      items: 3,
-      farmer: 'John Farm',
-    },
-    {
-      id: 'ORD-002',
-      date: '2024-01-18',
-      status: 'Shipped',
-      total: 125.50,
-      items: 2,
-      farmer: 'Green Valley',
-    },
-    {
-      id: 'ORD-003',
-      date: '2024-01-15',
-      status: 'Delivered',
-      total: 320.00,
-      items: 4,
-      farmer: 'Sunshine Farm',
-    },
-    {
-      id: 'ORD-004',
-      date: '2024-01-10',
-      status: 'Delivered',
-      total: 89.00,
-      items: 1,
-      farmer: 'Harvest Fields',
-    },
-  ]
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  const fetchOrders = async () => {
+    setLoading(true)
+    try {
+      const response = await getOrders()
+      if (response.data.success) {
+        setOrders(response.data.data.orders || [])
+      }
+    } catch (error) {
+      toast.error('Failed to load orders')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchOrders()
+  }, [])
 
   const statusColors = {
     Processing: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
@@ -80,55 +68,59 @@ const Orders = () => {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {orders.map((order, index) => (
-            <motion.div
-              key={order.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-            >
-              <Card>
-                <div className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <FiPackage className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading orders...</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order, index) => (
+              <motion.div
+                key={order._id || order.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                <Card>
+                  <div className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <FiPackage className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white">
+                            Order #{order._id || order.id}
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'} • {order.items?.length || 0} items
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          Order #{order.id}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {order.date} • {order.items} items
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          from {order.farmer}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">
-                          {formatCurrency(order.total)}
-                        </p>
-                        <span className={`text-xs px-2 py-1 rounded-full ${statusColors[order.status]}`}>
-                          {order.status}
-                        </span>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                            {formatCurrency(order.totalAmount || order.total)}
+                          </p>
+                          <span className={`text-xs px-2 py-1 rounded-full ${statusColors[order.status] || statusColors.Processing}`}>
+                            {order.status || 'Processing'}
+                          </span>
+                        </div>
+                        <Button size="sm" variant="outline" icon={FiEye}>
+                          View Details
+                        </Button>
                       </div>
-                      <Button size="sm" variant="outline" icon={FiEye}>
-                        View Details
-                      </Button>
                     </div>
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
-        {orders.length === 0 && (
+        {!loading && orders.length === 0 && (
           <Card>
             <div className="text-center py-12">
               <FiPackage className="w-16 h-16 text-gray-400 mx-auto mb-4" />

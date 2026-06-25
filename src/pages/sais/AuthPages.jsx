@@ -52,7 +52,7 @@ export const LoginPage = () => {
   const navigate = useNavigate()
   const [email, setEmail] = useState('farmer@sais.local')
   const [password, setPassword] = useState('password123')
-  const [role, setRole] = useState('farmer')
+  const [role, setRole] = useState('buyer')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState({})
 

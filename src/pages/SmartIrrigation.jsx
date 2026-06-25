@@ -7,10 +7,23 @@ import Input from '../components/common/Input'
 import Select from '../components/common/Select'
 import Card from '../components/common/Card'
 import { StatCard } from '../components/common/Card'
+import { getIrrigationRecommendation } from '../api/irrigationApi'
+import toast from 'react-hot-toast'
 
 const SmartIrrigation = () => {
   const [isCalculating, setIsCalculating] = useState(false)
   const [result, setResult] = useState(null)
+  const [formData, setFormData] = useState({
+    soilMoisture: '',
+    temperature: '',
+    humidity: '',
+    rainfall: '',
+    area: '',
+    cropType: '',
+    soilType: '',
+    growthStage: '',
+    location: '',
+  })
 
   const cropTypes = [
     { value: 'wheat', label: 'Wheat' },
@@ -25,24 +38,40 @@ const SmartIrrigation = () => {
     { value: 'loamy', label: 'Loamy' },
   ]
 
-  const handleCalculate = () => {
+  const growthStages = [
+    { value: 'seedling', label: 'Seedling' },
+    { value: 'vegetative', label: 'Vegetative' },
+    { value: 'flowering', label: 'Flowering' },
+    { value: 'maturity', label: 'Maturity' },
+  ]
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    })
+  }
+
+  const handleCalculate = async () => {
+    if (!formData.soilMoisture || !formData.temperature || !formData.humidity) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
     setIsCalculating(true)
-    setTimeout(() => {
-      setResult({
-        waterRequirement: 450,
-        frequency: 'Every 3 days',
-        duration: '2 hours',
-        optimalTime: '6:00 AM',
-        savings: 35,
-        schedule: [
-          { date: '2024-01-22', time: '6:00 AM', duration: '2 hours' },
-          { date: '2024-01-25', time: '6:00 AM', duration: '2 hours' },
-          { date: '2024-01-28', time: '6:00 AM', duration: '2 hours' },
-          { date: '2024-01-31', time: '6:00 AM', duration: '2 hours' },
-        ],
-      })
+    try {
+      const response = await getIrrigationRecommendation(formData)
+      if (response.data.success) {
+        setResult(response.data.data.record)
+        toast.success('Irrigation recommendation generated successfully')
+      } else {
+        toast.error(response.data.message || 'Recommendation failed')
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to generate recommendations')
+    } finally {
       setIsCalculating(false)
-    }, 2000)
+    }
   }
 
   return (
@@ -70,29 +99,87 @@ const SmartIrrigation = () => {
                 </h2>
 
                 <div className="space-y-4">
+                  <Input
+                    label="Soil Moisture (%)"
+                    type="number"
+                    name="soilMoisture"
+                    value={formData.soilMoisture}
+                    onChange={handleChange}
+                    placeholder="0-100"
+                    min="0"
+                    max="100"
+                    required
+                  />
+                  <Input
+                    label="Temperature (°C)"
+                    type="number"
+                    name="temperature"
+                    value={formData.temperature}
+                    onChange={handleChange}
+                    placeholder="-20 to 60"
+                    min="-20"
+                    max="60"
+                    required
+                  />
+                  <Input
+                    label="Humidity (%)"
+                    type="number"
+                    name="humidity"
+                    value={formData.humidity}
+                    onChange={handleChange}
+                    placeholder="0-100"
+                    min="0"
+                    max="100"
+                    required
+                  />
+                  <Input
+                    label="Rainfall (mm, optional)"
+                    type="number"
+                    name="rainfall"
+                    value={formData.rainfall}
+                    onChange={handleChange}
+                    placeholder="0-500"
+                    min="0"
+                    max="500"
+                  />
+                  <Input
+                    label="Field Area (acres, optional)"
+                    type="number"
+                    name="area"
+                    value={formData.area}
+                    onChange={handleChange}
+                    placeholder="0.01-1000000"
+                    min="0.01"
+                    max="1000000"
+                  />
                   <Select
-                    label="Crop Type"
+                    label="Crop Type (optional)"
                     placeholder="Select crop"
                     options={cropTypes}
+                    value={formData.cropType}
+                    onChange={(e) => setFormData({ ...formData, cropType: e.target.value })}
                   />
                   <Select
-                    label="Soil Type"
+                    label="Soil Type (optional)"
                     placeholder="Select soil type"
                     options={soilTypes}
+                    value={formData.soilType}
+                    onChange={(e) => setFormData({ ...formData, soilType: e.target.value })}
+                  />
+                  <Select
+                    label="Growth Stage (optional)"
+                    placeholder="Select growth stage"
+                    options={growthStages}
+                    value={formData.growthStage}
+                    onChange={(e) => setFormData({ ...formData, growthStage: e.target.value })}
                   />
                   <Input
-                    label="Field Area (acres)"
-                    type="number"
-                    placeholder="Enter field area"
-                  />
-                  <Input
-                    label="Current Soil Moisture (%)"
-                    type="number"
-                    placeholder="Enter moisture level"
-                  />
-                  <Input
-                    label="Growth Stage"
-                    placeholder="e.g., vegetative, flowering"
+                    label="Location (optional)"
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    placeholder="Farm location"
                   />
                 </div>
 
@@ -117,48 +204,41 @@ const SmartIrrigation = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <StatCard
-                    title="Water Required"
-                    value={`${result.waterRequirement}L`}
-                    icon={FiDroplet}
-                    color="primary"
-                  />
-                  <StatCard
-                    title="Water Savings"
-                    value={`${result.savings}%`}
-                    icon={FiActivity}
-                    color="success"
-                  />
-                </div>
-
                 <Card className="mb-6">
                   <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                      Irrigation Schedule
+                      Irrigation Recommendation
                     </h2>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <FiClock className="w-5 h-5 text-primary-500" />
-                          <span className="text-gray-900 dark:text-white">Frequency</span>
-                        </div>
-                        <span className="font-medium text-gray-900 dark:text-white">{result.frequency}</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <FiClock className="w-5 h-5 text-primary-500" />
-                          <span className="text-gray-900 dark:text-white">Duration</span>
-                        </div>
-                        <span className="font-medium text-gray-900 dark:text-white">{result.duration}</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <FiClock className="w-5 h-5 text-primary-500" />
-                          <span className="text-gray-900 dark:text-white">Optimal Time</span>
-                        </div>
-                        <span className="font-medium text-gray-900 dark:text-white">{result.optimalTime}</span>
-                      </div>
+                    <div className="space-y-4">
+                      {result.recommendation && typeof result.recommendation === 'object' ? (
+                        <>
+                          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <FiDroplet className="w-5 h-5 text-primary-500" />
+                              <span className="text-gray-900 dark:text-white">Water Required</span>
+                            </div>
+                            <span className="font-medium text-gray-900 dark:text-white">{result.recommendation.waterRequired || 'N/A'} L</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <FiClock className="w-5 h-5 text-primary-500" />
+                              <span className="text-gray-900 dark:text-white">Duration</span>
+                            </div>
+                            <span className="font-medium text-gray-900 dark:text-white">{result.recommendation.duration || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <FiActivity className="w-5 h-5 text-green-500" />
+                              <span className="text-gray-900 dark:text-white">Water Savings</span>
+                            </div>
+                                <span className="font-medium text-gray-900 dark:text-white">{result.recommendation.savings || 'N/A'}%</span>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {result.recommendation || 'No recommendation available'}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -166,21 +246,25 @@ const SmartIrrigation = () => {
                 <Card>
                   <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                      Upcoming Irrigation
+                      Input Summary
                     </h2>
-                    <div className="space-y-3">
-                      {result.schedule.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <FiCalendar className="w-5 h-5 text-secondary-500" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">{item.date}</p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{item.time}</p>
-                            </div>
-                          </div>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{item.duration}</span>
-                        </div>
-                      ))}
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <p className="text-gray-500 dark:text-gray-400">Soil Moisture</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{result.input?.soilMoisture || 'N/A'}%</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <p className="text-gray-500 dark:text-gray-400">Temperature</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{result.input?.temperature || 'N/A'}°C</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <p className="text-gray-500 dark:text-gray-400">Humidity</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{result.input?.humidity || 'N/A'}%</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <p className="text-gray-500 dark:text-gray-400">Rainfall</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{result.input?.rainfall || 'N/A'} mm</p>
+                      </div>
                     </div>
                   </div>
                 </Card>

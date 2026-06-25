@@ -4,6 +4,8 @@ import { FiUpload, FiActivity, FiAlertCircle, FiCheckCircle } from 'react-icons/
 import DashboardLayout from '../components/layout/DashboardLayout'
 import Button from '../components/common/Button'
 import Card from '../components/common/Card'
+import { detectDisease } from '../api/diseaseApi'
+import toast from 'react-hot-toast'
 
 const DiseaseDetection = () => {
   const [selectedFile, setSelectedFile] = useState(null)
@@ -13,23 +15,39 @@ const DiseaseDetection = () => {
   const handleFileSelect = (e) => {
     const file = e.target.files[0]
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file')
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB')
+        return
+      }
       setSelectedFile(file)
       setResult(null)
     }
   }
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    if (!selectedFile) {
+      toast.error('Please select an image first')
+      return
+    }
+
     setIsAnalyzing(true)
-    setTimeout(() => {
-      setResult({
-        disease: 'Wheat Leaf Rust',
-        severity: 'High',
-        confidence: 0.92,
-        treatment: 'Apply fungicide containing triazole. Remove infected leaves. Improve air circulation.',
-        affectedArea: '35%',
-      })
+    try {
+      const response = await detectDisease(selectedFile)
+      if (response.data.success) {
+        setResult(response.data.data.report)
+        toast.success('Disease detection completed successfully')
+      } else {
+        toast.error(response.data.message || 'Detection failed')
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to analyze image')
+    } finally {
       setIsAnalyzing(false)
-    }, 2000)
+    }
   }
 
   return (
@@ -137,9 +155,9 @@ const DiseaseDetection = () => {
                   <div className="p-6">
                     <div className="flex items-center space-x-3 mb-6">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        result.severity === 'High' ? 'bg-red-100 dark:bg-red-900/20' : 'bg-yellow-100 dark:bg-yellow-900/20'
+                        result.confidence > 0.7 ? 'bg-red-100 dark:bg-red-900/20' : 'bg-yellow-100 dark:bg-yellow-900/20'
                       }`}>
-                        {result.severity === 'High' ? (
+                        {result.confidence > 0.7 ? (
                           <FiAlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                         ) : (
                           <FiCheckCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
@@ -147,29 +165,38 @@ const DiseaseDetection = () => {
                       </div>
                       <div>
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                          {result.disease}
+                          {result.prediction}
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Severity: {result.severity} • Confidence: {(result.confidence * 100).toFixed(0)}%
+                          Confidence: {(result.confidence * 100).toFixed(0)}%
                         </p>
                       </div>
                     </div>
 
+                    {result.imageUrl && (
+                      <div className="mb-6">
+                        <h3 className="font-medium text-gray-900 dark:text-white mb-2">
+                          Uploaded Image
+                        </h3>
+                        <img src={result.imageUrl} alt="Disease analysis" className="w-full rounded-lg" />
+                      </div>
+                    )}
+
                     <div className="space-y-6">
                       <div>
                         <h3 className="font-medium text-gray-900 dark:text-white mb-2">
-                          Affected Area
+                          Confidence Level
                         </h3>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
                           <div
                             className={`h-4 rounded-full ${
-                              result.severity === 'High' ? 'bg-red-500' : 'bg-yellow-500'
+                              result.confidence > 0.7 ? 'bg-red-500' : 'bg-yellow-500'
                             }`}
-                            style={{ width: `${result.affectedArea}%` }}
+                            style={{ width: `${result.confidence * 100}%` }}
                           />
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {result.affectedArea} of plant affected
+                          {(result.confidence * 100).toFixed(0)}% confidence
                         </p>
                       </div>
 

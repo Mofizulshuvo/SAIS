@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiMail, FiLock, FiUser, FiPhone, FiMapPin } from 'react-icons/fi'
+import { FiMail, FiLock, FiUser } from 'react-icons/fi'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
@@ -18,11 +18,8 @@ const Register = () => {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm()
-
-  const password = watch('password')
 
   const onSubmit = async (data) => {
     try {
@@ -40,7 +37,7 @@ const Register = () => {
 
   const roleOptions = [
     { value: USER_ROLES.FARMER, label: 'Farmer' },
-    { value: USER_ROLES.BUYER, label: 'Buyer' },
+    { value: USER_ROLES.ADMIN, label: 'Admin' },
   ]
 
   return (
@@ -69,7 +66,7 @@ const Register = () => {
         </div>
 
         <Card>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
             <Input
               label="Full Name"
               type="text"
@@ -102,43 +99,13 @@ const Register = () => {
               })}
             />
 
-            <Input
-              label="Phone"
-              type="tel"
-              name="phone"
-              placeholder="Enter your phone number"
-              icon={FiPhone}
-              error={errors.phone?.message}
-              {...register('phone', {
-                required: 'Phone number is required',
-                pattern: {
-                  value: /^[\d\s-()+]+$/,
-                  message: 'Invalid phone number',
-                },
-              })}
-            />
-
-            <Input
-              label="Location"
-              type="text"
-              name="location"
-              placeholder="Enter your location"
-              icon={FiMapPin}
-              error={errors.location?.message}
-              {...register('location', {
-                required: 'Location is required',
-              })}
-            />
-
             <Select
-              label="Role"
+              label="Role (optional)"
               name="role"
               placeholder="Select your role"
               options={roleOptions}
               error={errors.role?.message}
-              {...register('role', {
-                required: 'Role is required',
-              })}
+              {...register('role')}
             />
 
             <Input
@@ -151,22 +118,9 @@ const Register = () => {
               {...register('password', {
                 required: 'Password is required',
                 minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters',
+                  value: 8,
+                  message: 'Password must be at least 8 characters',
                 },
-              })}
-            />
-
-            <Input
-              label="Confirm Password"
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm your password"
-              icon={FiLock}
-              error={errors.confirmPassword?.message}
-              {...register('confirmPassword', {
-                required: 'Please confirm your password',
-                validate: (value) => value === password || 'Passwords do not match',
               })}
             />
 

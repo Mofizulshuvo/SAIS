@@ -1,22 +1,85 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FiTrash2, FiShoppingBag, FiPlus, FiMinus } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import Button from '../components/common/Button'
 import Card from '../components/common/Card'
 import { formatCurrency } from '../utils/helpers'
+import { createOrder } from '../api/marketplaceApi'
+import toast from 'react-hot-toast'
 
 const Cart = () => {
-  const cartItems = [
-    { id: 1, name: 'Organic Wheat', price: 2.50, quantity: 100, unit: 'kg', farmer: 'John Farm', image: '🌾' },
-    { id: 2, name: 'Fresh Corn', price: 1.80, quantity: 50, unit: 'kg', farmer: 'Green Valley', image: '🌽' },
-    { id: 3, name: 'Organic Tomatoes', price: 3.20, quantity: 30, unit: 'kg', farmer: 'Sunshine Farm', image: '🍅' },
-  ]
+  const navigate = useNavigate()
+  const [cartItems, setCartItems] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart')
+    if (savedCart) {
+      setCartItems(JSON.parse(savedCart))
+    }
+  }, [])
+
+  const updateCart = (items) => {
+    setCartItems(items)
+    localStorage.setItem('cart', JSON.stringify(items))
+  }
+
+  const updateQuantity = (id, delta) => {
+    const updatedItems = cartItems.map(item => {
+      if (item._id === id) {
+        const newQuantity = Math.max(1, item.quantity + delta)
+        return { ...item, quantity: newQuantity }
+      }
+      return item
+    })
+    updateCart(updatedItems)
+  }
+
+  const removeItem = (id) => {
+    const updatedItems = cartItems.filter(item => item._id !== id)
+    updateCart(updatedItems)
+  }
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  const shipping = 15.00
+  const shipping = subtotal > 100 ? 0 : 15.00
   const tax = subtotal * 0.08
   const total = subtotal + shipping + tax
+
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) {
+      toast.error('Your cart is empty')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const orderData = {
+        items: cartItems.map(item => ({
+          productId: item._id,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        totalAmount: total,
+        shippingAddress: 'User default address',
+      }
+
+      const response = await createOrder(orderData)
+      if (response.data.success) {
+        toast.success('Order placed successfully!')
+        localStorage.removeItem('cart')
+        setCartItems([])
+        navigate('/orders')
+      } else {
+        toast.error(response.data.message || 'Failed to place order')
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to place order')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -54,7 +117,7 @@ const Cart = () => {
             <div className="lg:col-span-2 space-y-4">
               {cartItems.map((item, index) => (
                 <motion.div
-                  key={item.id}
+                  key={item._id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -62,26 +125,30 @@ const Cart = () => {
                   <Card>
                     <div className="p-6">
                       <div className="flex items-center space-x-4">
-                        <div className="text-5xl">{item.image}</div>
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
+                        ) : (
+                          <div className="text-5xl">🌾</div>
+                        )}
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
                             {item.name}
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                            by {item.farmer}
+                            {item.description || 'Quality product'}
                           </p>
                           <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                            {formatCurrency(item.price)}/{item.unit}
+                            {formatCurrency(item.price)}/{item.unit || 'unit'}
                           </p>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline" icon={FiMinus} />
+                          <Button size="sm" variant="outline" icon={FiMinus} onClick={() => updateQuantity(item._id, -1)} />
                           <span className="w-12 text-center font-semibold text-gray-900 dark:text-white">
                             {item.quantity}
                           </span>
-                          <Button size="sm" variant="outline" icon={FiPlus} />
+                          <Button size="sm" variant="outline" icon={FiPlus} onClick={() => updateQuantity(item._id, 1)} />
                         </div>
-                        <Button size="sm" variant="ghost" icon={FiTrash2} className="text-red-600" />
+                        <Button size="sm" variant="ghost" icon={FiTrash2} className="text-red-600" onClick={() => removeItem(item._id)} />
                       </div>
                     </div>
                   </Card>
@@ -103,7 +170,7 @@ const Cart = () => {
                     </div>
                     <div className="flex justify-between text-gray-600 dark:text-gray-400">
                       <span>Shipping</span>
-                      <span>{formatCurrency(shipping)}</span>
+                      <span>{shipping === 0 ? 'Free' : formatCurrency(shipping)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600 dark:text-gray-400">
                       <span>Tax (8%)</span>
@@ -117,7 +184,7 @@ const Cart = () => {
                     </div>
                   </div>
 
-                  <Button size="lg" fullWidth icon={FiShoppingBag}>
+                  <Button size="lg" fullWidth icon={FiShoppingBag} loading={loading} onClick={handleCheckout}>
                     Proceed to Checkout
                   </Button>
 

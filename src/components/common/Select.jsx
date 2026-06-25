@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { forwardRef } from 'react'
 import { motion } from 'framer-motion'
 
-const Select = ({
+const Select = forwardRef(({
   label,
   name,
   value,
@@ -11,10 +11,9 @@ const Select = ({
   error,
   helperText,
   disabled = false,
-  required = false,
   className = '',
   ...props
-}) => {
+}, ref) => {
   const baseClasses = 'w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-white dark:bg-gray-800'
   
   const stateClasses = error
@@ -28,18 +27,17 @@ const Select = ({
       {label && (
         <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       
       <div className="relative">
         <motion.select
+          ref={ref}
           name={name}
           id={name}
           value={value}
           onChange={onChange}
           disabled={disabled}
-          required={required}
           className={classes}
           whileFocus={{ scale: 1.01 }}
           {...props}
@@ -85,6 +83,8 @@ const Select = ({
       )}
     </div>
   )
-}
+})
+
+Select.displayName = 'Select'
 
 export default Select

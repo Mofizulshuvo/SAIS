@@ -5,6 +5,8 @@ import DashboardLayout from '../components/layout/DashboardLayout'
 import Button from '../components/common/Button'
 import Input from '../components/common/Input'
 import Card from '../components/common/Card'
+import { sendMessage, getChatHistory } from '../api/chatbotApi'
+import toast from 'react-hot-toast'
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -22,40 +24,53 @@ const Chatbot = () => {
     scrollToBottom()
   }, [messages])
 
-  const handleSend = () => {
+  const loadHistory = async () => {
+    try {
+      const response = await getChatHistory()
+      if (response.data.success) {
+        const history = response.data.data.chats || []
+        const formattedMessages = history.flatMap(chat => [
+          { id: Date.now() + Math.random(), type: 'user', text: chat.question },
+          { id: Date.now() + Math.random() + 1, type: 'bot', text: chat.answer },
+        ])
+        if (formattedMessages.length > 0) {
+          setMessages(formattedMessages)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error)
+    }
+  }
+
+  useEffect(() => {
+    loadHistory()
+  }, [])
+
+  const handleSend = async () => {
     if (!inputValue.trim()) return
 
     const userMessage = { id: Date.now(), type: 'user', text: inputValue }
-    setMessages([...messages, userMessage])
+    setMessages(prev => [...prev, userMessage])
     setInputValue('')
     setIsTyping(true)
 
-    setTimeout(() => {
-      const botResponse = { id: Date.now() + 1, type: 'bot', text: getBotResponse(inputValue) }
+    try {
+      const response = await sendMessage(inputValue)
+      if (response.data.success) {
+        const botAnswer = response.data.data.chat.answer
+        const botResponse = { id: Date.now() + 1, type: 'bot', text: botAnswer }
+        setMessages(prev => [...prev, botResponse])
+      } else {
+        toast.error(response.data.message || 'Failed to get response')
+        const botResponse = { id: Date.now() + 1, type: 'bot', text: 'Sorry, I could not process your request.' }
+        setMessages(prev => [...prev, botResponse])
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send message')
+      const botResponse = { id: Date.now() + 1, type: 'bot', text: 'Sorry, something went wrong. Please try again.' }
       setMessages(prev => [...prev, botResponse])
+    } finally {
       setIsTyping(false)
-    }, 1000)
-  }
-
-  const getBotResponse = (input) => {
-    const lowerInput = input.toLowerCase()
-    
-    if (lowerInput.includes('disease') || lowerInput.includes('sick')) {
-      return 'I can help with disease detection! Upload an image of your plant in the Disease Detection section, and our AI will identify any diseases and recommend treatments.'
-    } else if (lowerInput.includes('soil') || lowerInput.includes('fertilizer')) {
-      return 'For soil analysis, go to the Soil Analysis section. Enter your soil type and crop information to get nutrient recommendations and fertilization advice.'
-    } else if (lowerInput.includes('weather') || lowerInput.includes('rain')) {
-      return 'Check the Weather Prediction section for accurate forecasts. This will help you plan irrigation, spraying, and harvesting activities.'
-    } else if (lowerInput.includes('irrigation') || lowerInput.includes('water')) {
-      return 'Use our Smart Irrigation tool to calculate optimal watering schedules based on your crop type, soil conditions, and local weather.'
-    } else if (lowerInput.includes('crop') || lowerInput.includes('plant')) {
-      return 'The Crop Recommendation tool can suggest the best crops for your soil type, climate, and season. It also provides expected yields and planting tips.'
-    } else if (lowerInput.includes('market') || lowerInput.includes('buy') || lowerInput.includes('sell')) {
-      return 'Visit our Marketplace to buy agricultural products from verified farmers or sell your own produce. You can also track orders and manage your cart.'
-    } else if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
-      return 'Hello! I am here to help with all your agricultural needs. Ask me about disease detection, soil analysis, weather, irrigation, crop recommendations, or the marketplace.'
-    } else {
-      return 'I can help you with disease detection, soil analysis, weather prediction, irrigation scheduling, crop recommendations, and marketplace activities. What would you like to know more about?'
     }
   }
 

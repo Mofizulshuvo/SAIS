@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { login as loginApi, register as registerApi, logout as logoutApi } from '../../api/authApi'
 
+const getAuthPayload = (response) => response.data?.data || response.data
+
 const initialState = {
   user: null,
   token: null,
@@ -14,7 +16,7 @@ export const login = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await loginApi(credentials)
-      return response.data
+      return getAuthPayload(response)
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Login failed')
     }
@@ -26,7 +28,7 @@ export const register = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const response = await registerApi(userData)
-      return response.data
+      return getAuthPayload(response)
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Registration failed')
     }
@@ -53,9 +55,6 @@ const authSlice = createSlice({
       state.token = action.payload.token
       state.isAuthenticated = true
       localStorage.setItem('token', action.payload.token)
-      if (action.payload.refreshToken) {
-        localStorage.setItem('refreshToken', action.payload.refreshToken)
-      }
     },
     loginSuccess: (state, action) => {
       state.user = action.payload.user
@@ -63,9 +62,6 @@ const authSlice = createSlice({
       state.isAuthenticated = true
       state.error = null
       localStorage.setItem('token', action.payload.token)
-      if (action.payload.refreshToken) {
-        localStorage.setItem('refreshToken', action.payload.refreshToken)
-      }
     },
     clearCredentials: (state) => {
       state.user = null
@@ -88,9 +84,6 @@ const authSlice = createSlice({
         state.isAuthenticated = true
         state.error = null
         localStorage.setItem('token', action.payload.token)
-        if (action.payload.refreshToken) {
-          localStorage.setItem('refreshToken', action.payload.refreshToken)
-        }
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false
@@ -108,9 +101,6 @@ const authSlice = createSlice({
         state.isAuthenticated = true
         state.error = null
         localStorage.setItem('token', action.payload.token)
-        if (action.payload.refreshToken) {
-          localStorage.setItem('refreshToken', action.payload.refreshToken)
-        }
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false
@@ -118,6 +108,14 @@ const authSlice = createSlice({
         state.isAuthenticated = false
       })
       .addCase(logout.fulfilled, (state) => {
+        state.user = null
+        state.token = null
+        state.isAuthenticated = false
+        state.error = null
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+      })
+      .addCase(logout.rejected, (state) => {
         state.user = null
         state.token = null
         state.isAuthenticated = false

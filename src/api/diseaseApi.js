@@ -3,7 +3,7 @@ import axiosInstance from './axios'
 export const detectDisease = async (imageData) => {
   const formData = new FormData()
   formData.append('image', imageData)
-  return await axiosInstance.post('/disease/detect', formData, {
+  return await axiosInstance.post('/disease/predict', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
@@ -16,6 +16,6 @@ export const getDiseaseDetails = async (diseaseId) => {
   return await axiosInstance.get(`/disease/${diseaseId}`)
 }
 
-export const getTreatmentRecommendation = async (diseaseId) => {
-  return await axiosInstance.get(`/disease/${diseaseId}/treatment`)
+export const deleteDiseaseRecord = async (diseaseId) => {
+  return await axiosInstance.delete(`/disease/${diseaseId}`)
 }

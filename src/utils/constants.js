@@ -3,7 +3,6 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/ap
 export const USER_ROLES = {
   ADMIN: 'admin',
   FARMER: 'farmer',
-  BUYER: 'buyer',
 }
 
 export const CROP_CATEGORIES = {

@@ -6,17 +6,21 @@ import Button from '../components/common/Button'
 import Input from '../components/common/Input'
 import Select from '../components/common/Select'
 import Card from '../components/common/Card'
+import { analyzeSoil } from '../api/soilApi'
+import toast from 'react-hot-toast'
 
 const SoilAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState(null)
-
-  const soilTypes = [
-    { value: 'clay', label: 'Clay' },
-    { value: 'sandy', label: 'Sandy' },
-    { value: 'loamy', label: 'Loamy' },
-    { value: 'silty', label: 'Silty' },
-  ]
+  const [formData, setFormData] = useState({
+    nitrogen: '',
+    phosphorus: '',
+    potassium: '',
+    ph: '',
+    moisture: '',
+    cropType: '',
+    location: '',
+  })
 
   const cropTypes = [
     { value: 'wheat', label: 'Wheat' },
@@ -25,25 +29,33 @@ const SoilAnalysis = () => {
     { value: 'vegetables', label: 'Vegetables' },
   ]
 
-  const handleAnalyze = () => {
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    })
+  }
+
+  const handleAnalyze = async () => {
+    if (!formData.nitrogen || !formData.phosphorus || !formData.potassium || !formData.ph || !formData.moisture) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
     setIsAnalyzing(true)
-    setTimeout(() => {
-      setResult({
-        healthScore: 78,
-        phLevel: 6.5,
-        nitrogen: 'Medium',
-        phosphorus: 'High',
-        potassium: 'Low',
-        organicMatter: '2.5%',
-        recommendations: [
-          'Add potassium-rich fertilizer',
-          'Increase organic matter with compost',
-          'Maintain current pH level',
-          'Consider crop rotation with legumes',
-        ],
-      })
+    try {
+      const response = await analyzeSoil(formData)
+      if (response.data.success) {
+        setResult(response.data.data.record)
+        toast.success('Soil analysis completed successfully')
+      } else {
+        toast.error(response.data.message || 'Analysis failed')
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to analyze soil')
+    } finally {
       setIsAnalyzing(false)
-    }, 2000)
+    }
   }
 
   return (
@@ -71,30 +83,76 @@ const SoilAnalysis = () => {
                 </h2>
 
                 <div className="space-y-4">
-                  <Select
-                    label="Soil Type"
-                    placeholder="Select soil type"
-                    options={soilTypes}
+                  <Input
+                    label="Nitrogen (mg/kg)"
+                    type="number"
+                    name="nitrogen"
+                    value={formData.nitrogen}
+                    onChange={handleChange}
+                    placeholder="0-500"
+                    min="0"
+                    max="500"
+                    required
                   />
-                  <Select
-                    label="Intended Crop"
-                    placeholder="Select crop type"
-                    options={cropTypes}
+                  <Input
+                    label="Phosphorus (mg/kg)"
+                    type="number"
+                    name="phosphorus"
+                    value={formData.phosphorus}
+                    onChange={handleChange}
+                    placeholder="0-500"
+                    min="0"
+                    max="500"
+                    required
+                  />
+                  <Input
+                    label="Potassium (mg/kg)"
+                    type="number"
+                    name="potassium"
+                    value={formData.potassium}
+                    onChange={handleChange}
+                    placeholder="0-600"
+                    min="0"
+                    max="600"
+                    required
                   />
                   <Input
                     label="pH Level"
                     type="number"
+                    name="ph"
+                    value={formData.ph}
+                    onChange={handleChange}
                     step="0.1"
-                    placeholder="Enter pH level (0-14)"
+                    placeholder="0-14"
+                    min="0"
+                    max="14"
+                    required
                   />
                   <Input
-                    label="Sample Location"
+                    label="Moisture (%)"
+                    type="number"
+                    name="moisture"
+                    value={formData.moisture}
+                    onChange={handleChange}
+                    placeholder="0-100"
+                    min="0"
+                    max="100"
+                    required
+                  />
+                  <Select
+                    label="Intended Crop (optional)"
+                    placeholder="Select crop type"
+                    options={cropTypes}
+                    value={formData.cropType}
+                    onChange={(e) => setFormData({ ...formData, cropType: e.target.value })}
+                  />
+                  <Input
+                    label="Location (optional)"
                     type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
                     placeholder="Field location"
-                  />
-                  <Input
-                    label="Sample Date"
-                    type="date"
                   />
                 </div>
 
@@ -129,13 +187,13 @@ const SoilAnalysis = () => {
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-gray-600 dark:text-gray-400">Overall Health Score</span>
                         <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                          {result.healthScore}%
+                          {result.analysis?.healthScore || 0}%
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                         <div
                           className="bg-primary-500 h-3 rounded-full"
-                          style={{ width: `${result.healthScore}%` }}
+                          style={{ width: `${result.analysis?.healthScore || 0}%` }}
                         />
                       </div>
                     </div>
@@ -146,35 +204,35 @@ const SoilAnalysis = () => {
                           <FiDroplet className="w-5 h-5 text-blue-500" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">pH Level</span>
                         </div>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">{result.phLevel}</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">{result.input?.ph || 'N/A'}</p>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
                         <div className="flex items-center space-x-2 mb-2">
                           <FiActivity className="w-5 h-5 text-green-500" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Organic Matter</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Fertility Level</span>
                         </div>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">{result.organicMatter}</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white capitalize">{result.analysis?.fertilityLevel || 'N/A'}</p>
                       </div>
                     </div>
 
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Nitrogen</span>
-                        <span className={`font-medium ${
-                          result.nitrogen === 'High' ? 'text-green-600' : result.nitrogen === 'Low' ? 'text-red-600' : 'text-yellow-600'
-                        }`}>{result.nitrogen}</span>
+                        <span className={`font-medium capitalize ${
+                          result.analysis?.nutrients?.nitrogen === 'good' ? 'text-green-600' : result.analysis?.nutrients?.nitrogen === 'low' ? 'text-red-600' : 'text-yellow-600'
+                        }`}>{result.analysis?.nutrients?.nitrogen || 'N/A'}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Phosphorus</span>
-                        <span className={`font-medium ${
-                          result.phosphorus === 'High' ? 'text-green-600' : result.phosphorus === 'Low' ? 'text-red-600' : 'text-yellow-600'
-                        }`}>{result.phosphorus}</span>
+                        <span className={`font-medium capitalize ${
+                          result.analysis?.nutrients?.phosphorus === 'good' ? 'text-green-600' : result.analysis?.nutrients?.phosphorus === 'low' ? 'text-red-600' : 'text-yellow-600'
+                        }`}>{result.analysis?.nutrients?.phosphorus || 'N/A'}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Potassium</span>
-                        <span className={`font-medium ${
-                          result.potassium === 'High' ? 'text-green-600' : result.potassium === 'Low' ? 'text-red-600' : 'text-yellow-600'
-                        }`}>{result.potassium}</span>
+                        <span className={`font-medium capitalize ${
+                          result.analysis?.nutrients?.potassium === 'good' ? 'text-green-600' : result.analysis?.nutrients?.potassium === 'low' ? 'text-red-600' : 'text-yellow-600'
+                        }`}>{result.analysis?.nutrients?.potassium || 'N/A'}</span>
                       </div>
                     </div>
 
@@ -182,14 +240,9 @@ const SoilAnalysis = () => {
                       <h3 className="font-medium text-gray-900 dark:text-white mb-3">
                         Recommendations
                       </h3>
-                      <ul className="space-y-2">
-                        {result.recommendations.map((rec, index) => (
-                          <li key={index} className="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                            <span className="text-primary-500 mt-1">•</span>
-                            <span>{rec}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {result.recommendation || 'No recommendations available'}
+                      </p>
                     </div>
 
                     <Button size="lg" fullWidth className="mt-6">

@@ -9,12 +9,14 @@ export const register = async (userData) => {
 }
 
 export const logout = async () => {
-  return await axiosInstance.post('/auth/logout')
+  return Promise.resolve({ data: { success: true } })
 }
 
 export const getUserProfile = async () => {
   return await axiosInstance.get('/auth/profile')
 }
+
+export const getProfile = getUserProfile
 
 export const updateProfile = async (profileData) => {
   return await axiosInstance.put('/auth/profile', profileData)

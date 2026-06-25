@@ -13,13 +13,8 @@ import {
   PrivacyPolicyPage,
   TermsPage,
 } from '../pages/sais/PublicPages'
-import {
-  ForgotPasswordPage,
-  LoginPage,
-  RegisterPage,
-  ResetPasswordPage,
-  VerifyOTPPage,
-} from '../pages/sais/AuthPages'
+import Login from '../pages/Login'
+import Register from '../pages/Register'
 import { DashboardFeaturePage, RoleDashboardPage } from '../pages/sais/DashboardPages'
 import NotFound from '../pages/NotFound'
 
@@ -36,28 +31,6 @@ const farmerPages = [
   'orders',
   'notifications',
   'settings',
-  'profile',
-]
-
-const buyerPages = [
-  'marketplace',
-  'product-details',
-  'cart',
-  'checkout',
-  'order-tracking',
-  'wishlist',
-  'profile',
-  'notifications',
-  'settings',
-]
-
-const studentPages = [
-  'learning-center',
-  'disease-knowledge',
-  'soil-module',
-  'weather-module',
-  'chat-assistant',
-  'saved-articles',
   'profile',
 ]
 
@@ -88,16 +61,11 @@ const AppRoutes = () => (
       <Route path="/terms-and-conditions" element={<TermsPage />} />
     </Route>
 
-    <Route path="/login" element={<LoginPage />} />
-    <Route path="/register" element={<RegisterPage />} />
-    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-    <Route path="/reset-password" element={<ResetPasswordPage />} />
-    <Route path="/verify-otp" element={<VerifyOTPPage />} />
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
 
     <Route path="/dashboard" element={<DashboardRedirect />} />
     <Route path="/farmer/*" element={<RoleRoute role="farmer" pages={farmerPages} />} />
-    <Route path="/buyer/*" element={<RoleRoute role="buyer" pages={buyerPages} />} />
-    <Route path="/student/*" element={<RoleRoute role="student" pages={studentPages} />} />
     <Route path="/admin/*" element={<RoleRoute role="admin" pages={adminPages} />} />
 
     <Route path="*" element={<NotFound />} />

@@ -4,6 +4,8 @@ export const getCropRecommendations = async (cropData) => {
   return await axiosInstance.post('/crop/recommend', cropData)
 }
 
+export const recommendCrop = getCropRecommendations
+
 export const getCropDetails = async (cropId) => {
   return await axiosInstance.get(`/crop/${cropId}`)
 }

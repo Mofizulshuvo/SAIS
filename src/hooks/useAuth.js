@@ -48,7 +48,6 @@ export const useAuth = () => {
 
   const isAdmin = () => hasRole('admin')
   const isFarmer = () => hasRole('farmer')
-  const isBuyer = () => hasRole('buyer')
 
   return {
     user,
@@ -63,6 +62,5 @@ export const useAuth = () => {
     hasRole,
     isAdmin,
     isFarmer,
-    isBuyer,
   }
 }
